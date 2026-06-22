@@ -5092,6 +5092,10 @@ async fn main() -> Result<()> {
                             "Value required in --no-interactive mode. Usage: zeroclaw config set --no-interactive {path} <value>"
                         ))
                     })?;
+                    let val = val.trim().to_string();
+                    if val.is_empty() {
+                        anyhow::bail!("Value cannot be empty.");
+                    }
                     config.set_prop_persistent(&path, &val)?;
                 } else if Config::prop_is_secret(&path) {
                     if value.is_some() {
