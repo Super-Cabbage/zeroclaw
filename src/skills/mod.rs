@@ -500,7 +500,7 @@ async fn handle_bundle_add(
     }
     Box::pin(working.save_dirty())
         .await
-        .context("failed to persist config")
+        .context(|| format!("failed to persist config after creating skill-bundle '{alias}'"))
 }
 
 /// Delete a skill bundle: archive its directory, strip it from every agent's
@@ -568,7 +568,7 @@ async fn handle_bundle_remove(
     }
     Box::pin(working.save_dirty())
         .await
-        .context("failed to persist config")?;
+        .context(|| format!("failed to persist config after removing skill-bundle '{alias}'"))?;
 
     // Archive the bundle directory under shared/skills/_deleted/ (the runtime
     // skips that path, so it isn't re-scanned as live skills) now that the
@@ -667,7 +667,7 @@ async fn handle_bundle_rename(
     // failure can't leave the config naming `to` while the dir sits at `from`.
     Box::pin(working.save_dirty())
         .await
-        .context("failed to persist config")?;
+        .context(|| format!("failed to persist config after renaming skill-bundle to '{to}'"))?;
 
     // Move the directory (default per-alias path only; a custom path is
     // alias-independent → old == new → skip).

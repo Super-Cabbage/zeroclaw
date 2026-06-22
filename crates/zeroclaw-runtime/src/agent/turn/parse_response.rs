@@ -49,7 +49,9 @@ pub(crate) fn build_native_assistant_history(
     });
 
     if let Some(rc) = reasoning_content {
-        obj.as_object_mut().unwrap().insert(
+        obj.as_object_mut()
+            .expect("value was constructed as a JSON object on the line above")
+            .insert(
             "reasoning_content".to_string(),
             serde_json::Value::String(rc.to_string()),
         );

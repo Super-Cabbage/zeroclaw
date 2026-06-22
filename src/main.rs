@@ -102,7 +102,7 @@ async fn apply_comment_inline(
         &[(path.to_string(), comment.to_string())],
     )
     .await
-    .context("failed to write comment annotation")
+    .context(|| format!("failed to write comment annotation to {}", config_path.display()))
 }
 
 fn config_patch_prop_kind(config: &Config, path: &str) -> Option<crate::config::PropKind> {
@@ -143,7 +143,10 @@ fn config_patch_map_prop_error(err: anyhow::Error, path: &str, op_index: usize) 
 }
 
 fn config_patch_json_error(err: &ConfigApiError) -> Result<()> {
-    eprintln!("{}", serde_json::to_string_pretty(err)?);
+    eprintln!(
+        "Config patch error: {}",
+        serde_json::to_string_pretty(err)?
+    );
     std::process::exit(1);
 }
 
@@ -4922,10 +4925,10 @@ async fn main() -> Result<()> {
                     let schema = schemars::schema_for!(config::Config);
                     let value = match path.as_deref() {
                         None => serde_json::to_value(&schema)
-                            .context("failed to serialize JSON Schema")?,
+                            .context("failed to serialize whole-config JSON Schema")?,
                         Some(prop_path) => {
                             let full = serde_json::to_value(&schema)
-                                .context("failed to serialize JSON Schema")?;
+                                .context("failed to serialize requested-path JSON Schema")?;
                             // Embed the requested path so consumers see the same hint
                             // shape that OPTIONS /api/config/prop returns. Per-path
                             // subtree extraction is a follow-up that walks the schema
@@ -5054,7 +5057,10 @@ async fn main() -> Result<()> {
                                 )
                                 .with_path(&path);
                             if json {
-                                eprintln!("{}", serde_json::to_string_pretty(&api_err)?);
+                                eprintln!(
+                                    "Config set error: {}",
+                                    serde_json::to_string_pretty(&api_err)?
+                                );
                                 std::process::exit(1);
                             }
                             anyhow::bail!("{e}");

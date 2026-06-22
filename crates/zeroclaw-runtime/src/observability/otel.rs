@@ -63,7 +63,7 @@ impl OtelObserver {
         }
         let span_exporter = span_builder
             .build()
-            .map_err(|e| format!("Failed to create OTLP span exporter: {e}"))?;
+            .map_err(|e| format!("OTLP span exporter: {e}"))?;
 
         let tracer_provider = SdkTracerProvider::builder()
             .with_batch_exporter(span_exporter)
@@ -85,7 +85,7 @@ impl OtelObserver {
         }
         let metric_exporter = metric_builder
             .build()
-            .map_err(|e| format!("Failed to create OTLP metric exporter: {e}"))?;
+            .map_err(|e| format!("OTLP metric exporter: {e}"))?;
 
         let metric_reader =
             opentelemetry_sdk::metrics::PeriodicReader::builder(metric_exporter).build();
