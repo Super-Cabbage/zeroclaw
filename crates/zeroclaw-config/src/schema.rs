@@ -16263,6 +16263,10 @@ impl Config {
             let contents = fs::read_to_string(&config_path)
                 .await
                 .context("Failed to read config file")?;
+            // Strip a UTF-8 BOM if present.  Editors like Notepad on Windows
+            // may prepend U+FEFF; the TOML parser treats it as invalid syntax
+            // and would degrade the entire config to defaults.
+            let contents = contents.strip_prefix('\u{FEFF}').unwrap_or(&contents);
 
             // Deserialize the config with the standard TOML parser.
             //
@@ -18104,6 +18108,9 @@ impl Config {
         // to preserve comments and formatting. Otherwise, use the fresh serialization.
         let toml_str = if config_path.exists() {
             let existing = fs::read_to_string(&config_path).await.unwrap_or_default();
+            // Strip a UTF-8 BOM so the comment-preserving TOML parser doesn't
+            // reject the existing config, which would silently drop all comments.
+            let existing = existing.strip_prefix('\u{FEFF}').unwrap_or(&existing);
             if existing.is_empty() {
                 new_toml
             } else {
