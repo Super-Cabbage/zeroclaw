@@ -354,7 +354,7 @@ fn rename_config(config: &mut Config, kind: &AliasKind, from: &str, to: &str) ->
 async fn save(config: &mut Config) -> Result<()> {
     Box::pin(config.save_dirty())
         .await
-        .context("failed to persist config")
+        .context("failed to persist config after alias operation")
 }
 
 // ── agents ──────────────────────────────────────────────────────────────────
