@@ -3483,7 +3483,7 @@ impl AliasedAgentConfig {
     #[must_use]
     pub fn is_dispatchable(&self) -> bool {
         self.enabled
-            && !self.model_provider.is_empty()
+            && !self.model_provider.trim().is_empty()
             && !self.risk_profile.trim().is_empty()
             && !self.runtime_profile.trim().is_empty()
     }
