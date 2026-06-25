@@ -521,7 +521,12 @@ fn parse_prop_value(value_str: &str, kind: PropKind) -> anyhow::Result<toml::Val
             );
             anyhow::Error::msg(format!("Invalid float value '{value_str}'"))
         })?)),
-        PropKind::String | PropKind::Enum | PropKind::AliasRef => {
+        PropKind::String | PropKind::Enum => Ok(toml::Value::String(value_str.to_string())),
+        PropKind::AliasRef => {
+            if value_str.trim().is_empty() {
+                reject("empty-alias", ::serde_json::json!({"kind": "aliasref"}));
+                anyhow::bail!("alias must not be empty");
+            }
             Ok(toml::Value::String(value_str.to_string()))
         }
         PropKind::StringArray => {
