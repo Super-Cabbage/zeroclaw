@@ -2556,8 +2556,14 @@ impl Agent {
     }
 
     pub async fn run_interactive(&mut self) -> Result<()> {
-        println!("🦀 ZeroClaw Interactive Mode");
-        println!("Type /quit to exit.\n");
+        println!(
+            "{}",
+            crate::i18n::get_required_cli_string("cli-interactive-banner")
+        );
+        println!(
+            "{}\n",
+            crate::i18n::get_required_cli_string("cli-interactive-quit-hint")
+        );
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(32);
         let cli = crate::agent::loop_::CLI_CHANNEL_FN
@@ -2573,7 +2579,7 @@ impl Agent {
             let response = match self.turn(&msg.content).await {
                 Ok(resp) => resp,
                 Err(e) => {
-                    eprintln!("\nError: {e}\n");
+                    let _ = e; // error already logged by turn() via zeroclaw_log::record!
                     continue;
                 }
             };

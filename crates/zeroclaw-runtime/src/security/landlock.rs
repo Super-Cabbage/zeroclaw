@@ -10,6 +10,13 @@ use std::path::Path;
 
 use crate::security::traits::Sandbox;
 
+#[cfg(all(feature = "sandbox-landlock", target_os = "linux"))]
+/// Convert any `Display`-able error into `std::io::Error` via `Error::other`,
+/// preserving the original error text in the I/O error.
+fn io_other(e: impl std::fmt::Display) -> std::io::Error {
+    std::io::Error::other(e.to_string())
+}
+
 /// Landlock sandbox backend for Linux
 #[cfg(all(feature = "sandbox-landlock", target_os = "linux"))]
 #[derive(Debug)]
@@ -70,50 +77,46 @@ impl LandlockSandbox {
                     | AccessFs::MakeSym,
             )
             .and_then(|ruleset| ruleset.create())
-            .map_err(|e| std::io::Error::other(e.to_string()))?;
+            .map_err(io_other)?;
 
         // Allow workspace directory (read/write)
         if let Some(ref workspace) = self.workspace_dir
             && workspace.exists()
         {
-            let workspace_fd =
-                PathFd::new(workspace).map_err(|e| std::io::Error::other(e.to_string()))?;
+            let workspace_fd = PathFd::new(workspace).map_err(io_other)?;
             ruleset = ruleset
                 .add_rule(PathBeneath::new(
                     workspace_fd,
                     AccessFs::ReadFile | AccessFs::WriteFile | AccessFs::ReadDir,
                 ))
-                .map_err(|e| std::io::Error::other(e.to_string()))?;
+                .map_err(io_other)?;
         }
 
         // Allow /tmp for general operations
-        let tmp_fd =
-            PathFd::new(Path::new("/tmp")).map_err(|e| std::io::Error::other(e.to_string()))?;
+        let tmp_fd = PathFd::new(Path::new("/tmp")).map_err(io_other)?;
         ruleset = ruleset
             .add_rule(PathBeneath::new(
                 tmp_fd,
                 AccessFs::ReadFile | AccessFs::WriteFile,
             ))
-            .map_err(|e| std::io::Error::other(e.to_string()))?;
+            .map_err(io_other)?;
 
         // Allow /usr and /bin for executing commands
-        let usr_fd =
-            PathFd::new(Path::new("/usr")).map_err(|e| std::io::Error::other(e.to_string()))?;
+        let usr_fd = PathFd::new(Path::new("/usr")).map_err(io_other)?;
         ruleset = ruleset
             .add_rule(PathBeneath::new(
                 usr_fd,
                 AccessFs::ReadFile | AccessFs::ReadDir,
             ))
-            .map_err(|e| std::io::Error::other(e.to_string()))?;
+            .map_err(io_other)?;
 
-        let bin_fd =
-            PathFd::new(Path::new("/bin")).map_err(|e| std::io::Error::other(e.to_string()))?;
+        let bin_fd = PathFd::new(Path::new("/bin")).map_err(io_other)?;
         ruleset = ruleset
             .add_rule(PathBeneath::new(
                 bin_fd,
                 AccessFs::ReadFile | AccessFs::ReadDir,
             ))
-            .map_err(|e| std::io::Error::other(e.to_string()))?;
+            .map_err(io_other)?;
 
         // Apply the ruleset
         match ruleset.restrict_self() {

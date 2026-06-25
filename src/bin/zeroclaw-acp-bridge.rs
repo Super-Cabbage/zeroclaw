@@ -21,7 +21,7 @@ const ACP_BRIDGE_PAIRING_CODE_ENV: &str = "ZEROCLAW_ACP_PAIRING_CODE";
 #[tokio::main]
 async fn main() {
     if let Err(error) = run().await {
-        eprintln!("{error:#}");
+        eprintln!("ACP bridge fatal error: {error:#}");
         std::process::exit(1);
     }
 }

@@ -2219,8 +2219,14 @@ pub async fn run(
                     .await;
             }
         } else {
-            println!("🦀 ZeroClaw Interactive Mode");
-            println!("Type /help for commands.\n");
+            println!(
+                "{}",
+                crate::i18n::get_required_cli_string("cli-interactive-banner")
+            );
+            println!(
+                "{}\n",
+                crate::i18n::get_required_cli_string("cli-interactive-help-hint")
+            );
             let cli = CLI_CHANNEL_FN.get().expect(
                 "CLI channel factory not registered — call register_cli_channel_fn at startup",
             )();
@@ -2244,7 +2250,10 @@ pub async fn run(
                     Ok(0) => break,
                     Ok(_) => {}
                     Err(e) => {
-                        eprintln!("\nError reading input: {e}\n");
+                        let msg = crate::i18n::get_required_cli_string(
+                            "cli-interactive-error-reading-input",
+                        );
+                        eprintln!("\n{msg}: {e}\n");
                         break;
                     }
                 }
@@ -2257,21 +2266,41 @@ pub async fn run(
                 match user_input.as_str() {
                     "/quit" | "/exit" => break,
                     "/help" => {
-                        println!("Available commands:");
-                        println!("  /help             Show this help message");
-                        println!("  /clear /new       Clear conversation history");
-                        println!("  /quit /exit       Exit interactive mode");
                         println!(
-                            "  /think:<level>    Set reasoning depth (off|minimal|low|medium|high|max)\n"
+                            "{}",
+                            crate::i18n::get_required_cli_string("cli-interactive-help-header")
+                        );
+                        println!(
+                            "{}",
+                            crate::i18n::get_required_cli_string("cli-interactive-help-line-help")
+                        );
+                        println!(
+                            "{}",
+                            crate::i18n::get_required_cli_string("cli-interactive-help-line-clear")
+                        );
+                        println!(
+                            "{}",
+                            crate::i18n::get_required_cli_string("cli-interactive-help-line-quit")
+                        );
+                        println!(
+                            "{}\n",
+                            crate::i18n::get_required_cli_string("cli-interactive-help-line-think")
                         );
                         continue;
                     }
                     "/clear" | "/new" => {
                         println!(
-                            "This will clear the current conversation and delete all session memory."
+                            "{}",
+                            crate::i18n::get_required_cli_string("cli-interactive-clear-warning")
                         );
-                        println!("Core memories (long-term facts/preferences) will be preserved.");
-                        print!("Continue? [y/N] ");
+                        println!(
+                            "{}",
+                            crate::i18n::get_required_cli_string("cli-interactive-clear-preserve")
+                        );
+                        print!(
+                            "{} ",
+                            crate::i18n::get_required_cli_string("cli-interactive-continue-prompt")
+                        );
                         let _ = std::io::stdout().flush();
 
                         let mut confirm_raw = Vec::new();
@@ -2286,7 +2315,10 @@ pub async fn run(
                         }
                         let confirm = String::from_utf8_lossy(&confirm_raw);
                         if !matches!(confirm.trim().to_lowercase().as_str(), "y" | "yes") {
-                            println!("Cancelled.\n");
+                            println!(
+                                "{}\n",
+                                crate::i18n::get_required_cli_string("cli-interactive-cancelled")
+                            );
                             continue;
                         }
 
@@ -2303,9 +2335,18 @@ pub async fn run(
                             }
                         }
                         if cleared > 0 {
-                            println!("Conversation cleared ({cleared} memory entries removed).\n");
+                            println!(
+                                "{}\n",
+                                crate::i18n::get_required_cli_string_with_args(
+                                    "cli-interactive-cleared-with-count",
+                                    &[("count", &cleared.to_string())]
+                                )
+                            );
                         } else {
-                            println!("Conversation cleared.\n");
+                            println!(
+                                "{}\n",
+                                crate::i18n::get_required_cli_string("cli-interactive-cleared")
+                            );
                         }
                         if let Some(path) = session_state_file.as_deref() {
                             save_interactive_session_history(path, &history)?;
@@ -2727,7 +2768,6 @@ pub async fn run(
                                 }
                             }
 
-                            eprintln!("\nError: {e}\n");
                             break String::new();
                         }
                     }

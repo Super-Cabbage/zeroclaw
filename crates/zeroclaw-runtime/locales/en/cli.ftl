@@ -8,6 +8,8 @@ cli-gateway-about = Manage the gateway server (webhooks, websockets)
 cli-acp-about = Start the ACP server (JSON-RPC 2.0 over stdio)
 cli-daemon-about = Start the long-running autonomous daemon
 cli-service-about = Manage OS service lifecycle (launchd/systemd user service)
+cli-service-started = ✅ Service started
+cli-service-stopped = ✅ Service stopped
 cli-doctor-about = Run diagnostics for daemon/scheduler/channel freshness
 cli-status-about = Show system status (full details)
 cli-estop-about = Engage, inspect, and resume emergency-stop states
@@ -802,6 +804,22 @@ turn-tool-interrupted-before-result = [interrupted by user before this tool prod
 # Safe reply delivered when the model repeatedly emits malformed internal
 # tool-call protocol and the turn gives up retrying.
 channel-runtime-malformed-tool-output = I generated an internal tool-call format error and could not complete this request. Please try again.
+# ── Agent interactive mode (CLI) ────────────────────────────────────
+cli-interactive-banner = 🦀 ZeroClaw Interactive Mode
+cli-interactive-help-hint = Type /help for commands.
+cli-interactive-quit-hint = Type /quit to exit.
+cli-interactive-help-header = Available commands:
+cli-interactive-help-line-help = {"  "}/help             Show this help message
+cli-interactive-help-line-clear = {"  "}/clear /new       Clear conversation history
+cli-interactive-help-line-quit = {"  "}/quit /exit       Exit interactive mode
+cli-interactive-help-line-think = {"  "}/think:<level>    Set reasoning depth (off|minimal|low|medium|high|max)
+cli-interactive-clear-warning = This will clear the current conversation and delete all session memory.
+cli-interactive-clear-preserve = Core memories (long-term facts/preferences) will be preserved.
+cli-interactive-continue-prompt = Continue? [y/N]
+cli-interactive-cancelled = Cancelled.
+cli-interactive-cleared-with-count = Conversation cleared ({$count} memory entries removed).
+cli-interactive-cleared = Conversation cleared.
+cli-interactive-error-reading-input = Error reading input: { $error }
 
 # ── Alias CRUD CLI — zeroclaw {agents,providers,channels} {create,list,rename,delete} (#7468 / #7175) ──
 cli-alias-list-empty = (no entries under {$section})
