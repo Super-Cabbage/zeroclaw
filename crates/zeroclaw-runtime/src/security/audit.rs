@@ -252,24 +252,35 @@ impl AuditLogger {
     pub fn new(config: AuditConfig, zeroclaw_dir: PathBuf) -> Result<Self> {
         // Load and validate signing key if sign_events enabled
         let signing_key = if config.sign_events {
-            let key_hex = std::env::var("ZEROCLAW_AUDIT_SIGNING_KEY").map_err(|_| {
+            let key_hex = std::env::var("ZEROCLAW_AUDIT_SIGNING_KEY").map_err(|e| {
+                // Classify the error without exposing the key value.
+                // VarError::NotUnicode formats the raw OsString, which would
+                // leak the signing key if it contained non-UTF-8 bytes.
+                let reason = match &e {
+                    std::env::VarError::NotPresent => "not set",
+                    std::env::VarError::NotUnicode(_) => "not valid Unicode",
+                };
                 ::zeroclaw_log::record!(
                     ERROR,
                     ::zeroclaw_log::Event::new(module_path!(), ::zeroclaw_log::Action::Fail)
-                        .with_outcome(::zeroclaw_log::EventOutcome::Failure),
+                        .with_outcome(::zeroclaw_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"reason": reason})),
                     "audit log: sign_events=true but ZEROCLAW_AUDIT_SIGNING_KEY env var not set"
                 );
-                anyhow::Error::msg("sign_events enabled but ZEROCLAW_AUDIT_SIGNING_KEY not set")
+                anyhow::Error::msg(format!(
+                    "sign_events enabled but ZEROCLAW_AUDIT_SIGNING_KEY {reason}"
+                ))
             })?;
 
-            let key_bytes = hex::decode(&key_hex).map_err(|_| {
+            let key_bytes = hex::decode(&key_hex).map_err(|e| {
                 ::zeroclaw_log::record!(
                     ERROR,
                     ::zeroclaw_log::Event::new(module_path!(), ::zeroclaw_log::Action::Fail)
-                        .with_outcome(::zeroclaw_log::EventOutcome::Failure),
+                        .with_outcome(::zeroclaw_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "audit log: ZEROCLAW_AUDIT_SIGNING_KEY env var must be hex-encoded"
                 );
-                anyhow::Error::msg("ZEROCLAW_AUDIT_SIGNING_KEY must be hex-encoded")
+                anyhow::Error::msg(format!("ZEROCLAW_AUDIT_SIGNING_KEY must be hex-encoded: {e}"))
             })?;
 
             if key_bytes.len() != 32 {
@@ -301,14 +312,15 @@ impl AuditLogger {
             use hmac::{Hmac, Mac};
             use sha2::Sha256;
 
-            let mut mac = Hmac::<Sha256>::new_from_slice(key_bytes).map_err(|_| {
+            let mut mac = Hmac::<Sha256>::new_from_slice(key_bytes).map_err(|e| {
                 ::zeroclaw_log::record!(
                     ERROR,
                     ::zeroclaw_log::Event::new(module_path!(), ::zeroclaw_log::Action::Fail)
-                        .with_outcome(::zeroclaw_log::EventOutcome::Failure),
+                        .with_outcome(::zeroclaw_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "audit log: HMAC-SHA256 init rejected key length"
                 );
-                anyhow::Error::msg("Invalid HMAC key length")
+                anyhow::Error::msg(format!("Invalid HMAC key length: {e}"))
             })?;
             mac.update(entry_hash.as_bytes());
 
@@ -522,14 +534,15 @@ pub fn verify_chain(log_path: &Path) -> Result<u64> {
             use hmac::{Hmac, Mac};
             use sha2::Sha256;
 
-            let mut mac = Hmac::<Sha256>::new_from_slice(key_bytes).map_err(|_| {
+            let mut mac = Hmac::<Sha256>::new_from_slice(key_bytes).map_err(|e| {
                 ::zeroclaw_log::record!(
                     ERROR,
                     ::zeroclaw_log::Event::new(module_path!(), ::zeroclaw_log::Action::Fail)
-                        .with_outcome(::zeroclaw_log::EventOutcome::Failure),
+                        .with_outcome(::zeroclaw_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "audit log: HMAC-SHA256 verify rejected key length"
                 );
-                anyhow::Error::msg("Invalid HMAC key length during verification")
+                anyhow::Error::msg(format!("Invalid HMAC key length during verification: {e}"))
             })?;
             mac.update(entry.entry_hash.as_bytes());
             let expected_sig = hex::encode(mac.finalize().into_bytes());
